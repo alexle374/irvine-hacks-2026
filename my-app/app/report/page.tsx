@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import HomeIcon from "@/components/HomeIcon";
 
@@ -9,18 +9,48 @@ const REPORT_DATA = {
   summary:
     "This 1949 home has undergone several permitted updates, including structural, roofing, and some plumbing/electrical work, primarily between 2014 and 2019.",
   good_points: [
-    "Foundation/cripple wall reinforcement permitted on 2014-08-29 suggests structural improvements.",
-    "A re-roof permit from 2014-08-21 indicates a newer roof system was installed.",
-    "Interior bathroom remodel/repair permitted on 2014-08-26 suggests updated finishes.",
-    "Recent plumbing work permitted on 2019-10-31 and 2014-12-18 could mean some updated piping.",
-    "Electrical permits from 2015-01-20 and 2014-12-18 suggest some system upgrades.",
+    {
+      text: "Foundation/cripple wall reinforcement permitted on 2014-08-29 suggests structural improvements.",
+      detail: "Permit records show approved structural work; recommend verifying scope with seller and any engineer reports.",
+    },
+    {
+      text: "A re-roof permit from 2014-08-21 indicates a newer roof system was installed.",
+      detail: "Roof permit suggests full or partial replacement; confirm remaining life and underlayment with a licensed roofer.",
+    },
+    {
+      text: "Interior bathroom remodel/repair permitted on 2014-08-26 suggests updated finishes.",
+      detail: "Bathroom updates may include fixtures and waterproofing; check for current code compliance and moisture issues.",
+    },
+    {
+      text: "Recent plumbing work permitted on 2019-10-31 and 2014-12-18 could mean some updated piping.",
+      detail: "Plumbing permits indicate targeted updates; original supply/drain lines may remain elsewhere in the home.",
+    },
+    {
+      text: "Electrical permits from 2015-01-20 and 2014-12-18 suggest some system upgrades.",
+      detail: "Electrical permits suggest panel or circuit updates; full rewire not guaranteed—have an electrician assess.",
+    },
   ],
   bad_points: [
-    "Original plumbing (based on age) may still be present in some areas, potentially lead or galvanized.",
-    "Original electrical wiring (based on age) could exist, possibly knob-and-tube or ungrounded circuits.",
-    "HVAC system (based on age) may be original or outdated, requiring inspection for efficiency and safety.",
-    "Sewer lines (based on age) could be cast iron or clay, prone to root intrusion or collapse.",
-    "The ADU claim for a detached garage should be verified for proper permitting and habitability.",
+    {
+      text: "Original plumbing (based on age) may still be present in some areas, potentially lead or galvanized.",
+      detail: "Request a sewer scope and plumbing inspection to identify material, condition, and any polybutylene or lead.",
+    },
+    {
+      text: "Original electrical wiring (based on age) could exist, possibly knob-and-tube or ungrounded circuits.",
+      detail: "Have an electrician assess for knob-and-tube, aluminum, or ungrounded circuits and capacity for modern loads.",
+    },
+    {
+      text: "HVAC system (based on age) may be original or outdated, requiring inspection for efficiency and safety.",
+      detail: "Get HVAC age and service history; consider efficiency, duct condition, and replacement cost in your budget.",
+    },
+    {
+      text: "Sewer lines (based on age) could be cast iron or clay, prone to root intrusion or collapse.",
+      detail: "Sewer scope strongly recommended; cast iron and clay are common in older homes and can fail without warning.",
+    },
+    {
+      text: "The ADU claim for a detached garage should be verified for proper permitting and habitability.",
+      detail: "Confirm ADU permits and current code compliance with the city before relying on rental or accessory income.",
+    },
   ],
   questions_to_ask: [
     "Can you provide details of the scope of the 2014 structural and roofing work?",
@@ -54,6 +84,36 @@ const BAD_POINT_CATEGORIES = [
 
 export default function ReportPage() {
   const [mouse, setMouse] = useState({ x: 0, y: 0 });
+  const [hoveredGood, setHoveredGood] = useState<number | null>(null);
+  const [hoveredBad, setHoveredBad] = useState<number | null>(null);
+  const [inViewSections, setInViewSections] = useState<Set<string>>(new Set());
+  const mainContentRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = mainContentRef.current;
+    if (!el) return;
+    const sections = el.querySelectorAll("[data-section]");
+    const observer = new IntersectionObserver(
+      (entries) => {
+        setInViewSections((prev) => {
+          const next = new Set(prev);
+          entries.forEach((entry) => {
+            const id = entry.target.getAttribute("data-section");
+            if (id) {
+              if (entry.isIntersecting) next.add(id);
+              else next.delete(id);
+            }
+          });
+          return next;
+        });
+      },
+      { threshold: 0.08, rootMargin: "0px 0px -40px 0px" }
+    );
+    sections.forEach((s) => observer.observe(s));
+    return () => sections.forEach((s) => observer.unobserve(s));
+  }, []);
+
+  const inView = (id: string) => inViewSections.has(id);
 
   return (
     <div
@@ -114,7 +174,7 @@ export default function ReportPage() {
       {/* Main content */}
       <main className="relative z-10 mx-auto max-w-4xl px-4 pb-24 pt-28 sm:px-6 lg:px-8">
         {/* Glassmorphism card wrapping all report content */}
-        <div className="rounded-3xl border border-white/40 bg-white/60 p-8 shadow-[0_8px_48px_rgba(0,0,0,0.08)] backdrop-blur-xl sm:p-10 md:p-12">
+        <div ref={mainContentRef} className="rounded-3xl border border-white/40 bg-white/60 p-8 shadow-[0_8px_48px_rgba(0,0,0,0.08)] backdrop-blur-xl sm:p-10 md:p-12">
 
           {/* Report Header */}
           <header className="mb-16">
@@ -152,11 +212,43 @@ export default function ReportPage() {
           </header>
 
           {/* AI Summary */}
-          <section className="mb-16 overflow-hidden rounded-2xl border border-white/40 bg-white/70 backdrop-blur-md">
-            <div className="h-1 w-full bg-[#b8d4e8]" />
+          <section
+            data-section="ai-summary"
+            className={`mb-16 overflow-hidden rounded-2xl border border-white/40 bg-white/70 backdrop-blur-md transition-all duration-500 ease-out ${
+              inView("ai-summary") ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
+            }`}
+          >
+            {/* Same gradient as Gemini icon for consistent branding */}
+            <div
+              className="h-1 w-full"
+              style={{
+                background: "linear-gradient(90deg, #5a8ab0 0%, #7ba3c4 50%, #b8d4e8 100%)",
+              }}
+            />
             <div className="p-6 sm:p-8">
               <div className="mb-4 flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-[#7ba3c4]" />
+                {/* Gemini-style four-point sparkle, same gradient as bar */}
+                <svg
+                  className="h-5 w-5 shrink-0"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  aria-hidden
+                >
+                  <defs>
+                    {/* Matches bar gradient: 90deg #5a8ab0 → #7ba3c4 → #b8d4e8 */}
+                    <linearGradient id="gemini-sparkle" x1="0" y1="12" x2="24" y2="12" gradientUnits="userSpaceOnUse">
+                      <stop offset="0%" stopColor="#5a8ab0" />
+                      <stop offset="50%" stopColor="#7ba3c4" />
+                      <stop offset="100%" stopColor="#b8d4e8" />
+                    </linearGradient>
+                  </defs>
+                  {/* Four-point star sparkle (Gemini AI icon shape) */}
+                  <path
+                    d="M12 2L18 8L22 12L18 16L12 22L6 16L2 12L6 8Z"
+                    fill="url(#gemini-sparkle)"
+                  />
+                </svg>
                 <h2 className="text-sm font-semibold uppercase tracking-wider text-neutral-700">
                   AI Summary
                 </h2>
@@ -166,23 +258,28 @@ export default function ReportPage() {
           </section>
 
           {/* Score Overview */}
-          <section className="mb-16 grid grid-cols-1 gap-6 sm:grid-cols-3">
+          <section
+            data-section="stats"
+            className={`mb-16 grid grid-cols-1 gap-6 transition-all duration-500 ease-out sm:grid-cols-3 ${
+              inView("stats") ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
+            }`}
+          >
             {[
               {
                 count: REPORT_DATA.good_points.length,
                 label: "Good Points",
-                iconBg: "bg-[#b8d4e8]",
-                iconColor: "text-[#5a8ab0]",
-                barColor: "bg-[#7ba3c4]",
+                iconBg: "bg-emerald-100",
+                iconColor: "text-emerald-600",
+                barColor: "bg-emerald-500",
                 icon: <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />,
                 fill: true,
               },
               {
                 count: REPORT_DATA.bad_points.length,
                 label: "Bad Points",
-                iconBg: "bg-amber-100",
-                iconColor: "text-amber-600",
-                barColor: "bg-amber-500",
+                iconBg: "bg-red-100",
+                iconColor: "text-red-600",
+                barColor: "bg-red-500",
                 icon: <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />,
                 fill: true,
               },
@@ -212,9 +309,14 @@ export default function ReportPage() {
           </section>
 
           {/* Good Points */}
-          <section className="mb-16">
+          <section
+            data-section="good-points"
+            className={`group/good mb-16 transition-all duration-500 ease-out ${
+              inView("good-points") ? "in-view translate-y-0 opacity-100" : "translate-y-4 opacity-0"
+            }`}
+          >
             <h2 className="mb-8 flex items-center gap-3 text-xl font-bold text-neutral-900">
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#b8d4e8] text-[#5a8ab0]">
+              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600">
                 <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
                 </svg>
@@ -223,23 +325,52 @@ export default function ReportPage() {
             </h2>
             <ul className="space-y-5">
               {REPORT_DATA.good_points.map((point, i) => (
-                <li key={i} className="flex items-start gap-4 rounded-2xl border border-[#b8d4e8]/60 bg-white/70 p-5 backdrop-blur-sm">
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#7ba3c4] text-sm font-bold text-white">
-                    {i + 1}
-                  </span>
-                  <p className="flex-1 text-neutral-700">{point}</p>
-                  <span className="shrink-0 rounded-full bg-[#d4e8f5] px-3 py-1.5 text-xs font-semibold text-[#5a8ab0]">
-                    {GOOD_POINT_CATEGORIES[i]}
-                  </span>
+                <li
+                  key={i}
+                  onMouseEnter={() => setHoveredGood(i)}
+                  onMouseLeave={() => setHoveredGood(null)}
+                  className={`flex flex-col gap-0 rounded-2xl border border-emerald-200/60 bg-white/70 p-5 backdrop-blur-sm opacity-0 translate-y-2 transition-all duration-300 ease-out group-[.in-view]/good:opacity-100 group-[.in-view]/good:translate-y-0 ${
+                    hoveredGood === i
+                      ? "scale-[1.02] shadow-[0_12px_40px_rgba(0,0,0,0.12)]"
+                      : "shadow-[0_4px_20px_rgba(0,0,0,0.06)]"
+                  }`}
+                  style={{ transitionDelay: `${i * 75}ms` }}
+                >
+                  <div className="flex items-start gap-4">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-sm font-bold text-white">
+                      {i + 1}
+                    </span>
+                    <p className="min-w-0 flex-1 text-neutral-700">{point.text}</p>
+                    <span className="shrink-0 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition-all duration-200 hover:scale-105 hover:brightness-110">
+                      {GOOD_POINT_CATEGORIES[i]}
+                    </span>
+                  </div>
+                  <div
+                    className="grid transition-[max-height,opacity] duration-300 ease-out"
+                    style={{
+                      maxHeight: hoveredGood === i ? 200 : 0,
+                      opacity: hoveredGood === i ? 1 : 0,
+                      overflow: "hidden",
+                    }}
+                  >
+                    <p className="mt-3 border-t border-emerald-200/40 pt-3 text-sm text-neutral-600">
+                      {point.detail}
+                    </p>
+                  </div>
                 </li>
               ))}
             </ul>
           </section>
 
           {/* Bad Points */}
-          <section className="mb-16">
+          <section
+            data-section="bad-points"
+            className={`group/bad mb-16 transition-all duration-500 ease-out ${
+              inView("bad-points") ? "in-view translate-y-0 opacity-100" : "translate-y-4 opacity-0"
+            }`}
+          >
             <h2 className="mb-8 flex items-center gap-3 text-xl font-bold text-neutral-900">
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-100 text-amber-600">
+              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-red-100 text-red-600">
                 <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
                 </svg>
@@ -248,21 +379,50 @@ export default function ReportPage() {
             </h2>
             <ul className="space-y-5">
               {REPORT_DATA.bad_points.map((point, i) => (
-                <li key={i} className="flex items-start gap-4 rounded-2xl border border-amber-200/60 bg-white/70 p-5 backdrop-blur-sm">
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-500 text-sm font-bold text-white">
-                    {i + 1}
-                  </span>
-                  <p className="flex-1 text-neutral-700">{point}</p>
-                  <span className="shrink-0 rounded-full bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-800">
-                    {BAD_POINT_CATEGORIES[i]}
-                  </span>
+                <li
+                  key={i}
+                  onMouseEnter={() => setHoveredBad(i)}
+                  onMouseLeave={() => setHoveredBad(null)}
+                  className={`flex flex-col gap-0 rounded-2xl border border-red-200/60 bg-white/70 p-5 backdrop-blur-sm opacity-0 translate-y-2 transition-all duration-300 ease-out group-[.in-view]/bad:opacity-100 group-[.in-view]/bad:translate-y-0 ${
+                    hoveredBad === i
+                      ? "scale-[1.02] shadow-[0_12px_40px_rgba(0,0,0,0.12)]"
+                      : "shadow-[0_4px_20px_rgba(0,0,0,0.06)]"
+                  }`}
+                  style={{ transitionDelay: `${i * 75}ms` }}
+                >
+                  <div className="flex items-start gap-4">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-red-500 text-sm font-bold text-white">
+                      {i + 1}
+                    </span>
+                    <p className="min-w-0 flex-1 text-neutral-700">{point.text}</p>
+                    <span className="shrink-0 rounded-full bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-800 transition-all duration-200 hover:scale-105 hover:brightness-110">
+                      {BAD_POINT_CATEGORIES[i]}
+                    </span>
+                  </div>
+                  <div
+                    className="grid transition-[max-height,opacity] duration-300 ease-out"
+                    style={{
+                      maxHeight: hoveredBad === i ? 200 : 0,
+                      opacity: hoveredBad === i ? 1 : 0,
+                      overflow: "hidden",
+                    }}
+                  >
+                    <p className="mt-3 border-t border-red-200/40 pt-3 text-sm text-neutral-600">
+                      {point.detail}
+                    </p>
+                  </div>
                 </li>
               ))}
             </ul>
           </section>
 
           {/* Questions to Ask */}
-          <section className="mb-16">
+          <section
+            data-section="questions"
+            className={`group/questions mb-16 transition-all duration-500 ease-out ${
+              inView("questions") ? "in-view translate-y-0 opacity-100" : "translate-y-4 opacity-0"
+            }`}
+          >
             <h2 className="mb-8 flex items-center gap-3 text-xl font-bold text-neutral-900">
               <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-sky-100 text-sky-600">
                 <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -273,23 +433,34 @@ export default function ReportPage() {
             </h2>
             <ul className="space-y-5">
               {REPORT_DATA.questions_to_ask.map((question, i) => (
-                <li key={i} className="flex items-start gap-4 rounded-2xl border border-sky-200/60 bg-white/70 p-5 backdrop-blur-sm">
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-sky-500 text-sm font-bold text-white">
-                    {i + 1}
-                  </span>
-                  <p className="flex-1 text-neutral-700">{question}</p>
-                  {i === 0 && (
-                    <span className="shrink-0 rounded-full bg-sky-50 px-3 py-1.5 text-xs font-semibold text-sky-700">
-                      {REPORT_DATA.questions_to_ask.length} questions
+                <li
+                  key={i}
+                  className="cursor-pointer rounded-2xl border border-sky-200/60 bg-white/70 p-5 backdrop-blur-sm opacity-0 translate-y-2 transition-all duration-300 ease-out group-[.in-view]/questions:opacity-100 group-[.in-view]/questions:translate-y-0 hover:-translate-y-1 hover:shadow-[0_8px_28px_rgba(0,0,0,0.08)]"
+                  style={{ transitionDelay: `${i * 75}ms` }}
+                >
+                  <div className="flex items-start gap-4">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-sky-500 text-sm font-bold text-white">
+                      {i + 1}
                     </span>
-                  )}
+                    <p className="flex-1 text-neutral-700">{question}</p>
+                    {i === 0 && (
+                      <span className="shrink-0 rounded-full bg-sky-50 px-3 py-1.5 text-xs font-semibold text-sky-700">
+                        {REPORT_DATA.questions_to_ask.length} questions
+                      </span>
+                    )}
+                  </div>
                 </li>
               ))}
             </ul>
           </section>
 
           {/* Nearby Inspection Companies */}
-          <section className="mb-16">
+          <section
+            data-section="nearby"
+            className={`group/nearby mb-16 transition-all duration-500 ease-out ${
+              inView("nearby") ? "in-view translate-y-0 opacity-100" : "translate-y-4 opacity-0"
+            }`}
+          >
             <h2 className="mb-8 flex items-center gap-3 text-xl font-bold text-neutral-900">
               <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-sky-100 text-sky-600">
                 <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -300,7 +471,11 @@ export default function ReportPage() {
             </h2>
             <div className="grid gap-6 sm:grid-cols-2">
               {NEARBY_INSPECTORS.map((company, i) => (
-                <div key={i} className="rounded-2xl border border-white/40 bg-white/70 p-6 backdrop-blur-md">
+                <div
+                  key={i}
+                  className="rounded-2xl border border-white/40 bg-white/70 p-6 backdrop-blur-md opacity-0 translate-y-2 transition-all duration-300 ease-out group-[.in-view]/nearby:opacity-100 group-[.in-view]/nearby:translate-y-0 hover:-translate-y-1 hover:shadow-[0_8px_28px_rgba(0,0,0,0.08)]"
+                  style={{ transitionDelay: `${i * 75}ms` }}
+                >
                   <h3 className="mb-2 font-bold text-neutral-900">{company.name}</h3>
                   <p className="mb-2 text-sm text-neutral-600">{company.phone}</p>
                   <p className="mb-5 flex items-center gap-1.5 text-sm text-neutral-600">
