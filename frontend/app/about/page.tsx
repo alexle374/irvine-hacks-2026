@@ -124,7 +124,7 @@ export default function AboutPage() {
             transformStyle: "preserve-3d",
           }}
         >
-          About Inspector AI
+          About CloseSure AI
         </h1>
 
         <ScrollSection>
