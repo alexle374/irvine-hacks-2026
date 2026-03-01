@@ -66,8 +66,7 @@ function ReportContent() {
       })
       .then((data: ReportData) => {
         if (data.status === "UNSUPPORTED_CITY") {
-          const msg = (data as { message?: string }).message;
-          setError(msg || "Unsupported city. Permit lookup is only available for addresses within: Los Angeles (LA), Chicago, San Francisco, San Diego County, Seattle, and New York City.");
+          setError("Sorry, this city is not supported yet. Only Los Angeles addresses are currently supported.");
         } else {
           const normalize = (pts: unknown[]) =>
             pts.map((p) => (typeof p === "string" ? { text: p } : p as { text: string; detail?: string }));
