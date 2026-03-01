@@ -1,6 +1,7 @@
 # backend.py
 from pathlib import Path
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from dotenv import load_dotenv
 
@@ -12,6 +13,13 @@ from services.ai_service import generate_ai_report
 from services.clients import find_nearby_inspectors
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 class InspectionRequest(BaseModel):
     full_address: str
