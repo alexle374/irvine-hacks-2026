@@ -47,6 +47,7 @@ export default function AddressPage() {
     if (!form.city.trim()) e.city = "City is required.";
     if (!form.state.trim()) e.state = "State is required.";
     if (!/^\d{5}(-\d{4})?$/.test(form.zip.trim())) e.zip = "Enter a valid ZIP code.";
+    if (!form.yearBuilt.trim()) e.yearBuilt = "Year built is required.";
     if (form.yearBuilt && !/^\d{4}$/.test(form.yearBuilt.trim()))
       e.yearBuilt = "Enter a 4-digit year.";
     return e;
@@ -250,7 +251,7 @@ export default function AddressPage() {
 
               <div className="max-w-[180px]">
                 <label className="mb-1.5 block text-sm font-medium text-neutral-700" htmlFor="yearBuilt">
-                  Year built <span className="font-normal text-neutral-400">(optional)</span>
+                  Year built
                 </label>
                 <input
                   id="yearBuilt"
@@ -311,35 +312,6 @@ export default function AddressPage() {
 
               {form.hasAdu && (
                 <div className="space-y-5 rounded-2xl border border-[#b8d4e8]/50 bg-white/50 p-5 backdrop-blur-sm">
-                  {/* Additional units Y/N */}
-                  <div>
-                    <p className="mb-3 text-sm font-medium text-neutral-700">
-                      Are there any additional units beyond the main home?
-                    </p>
-                    <div className="flex gap-3">
-                      {(["yes", "no"] as const).map((val) => (
-                        <label
-                          key={val}
-                          className={`flex cursor-pointer items-center gap-2 rounded-2xl border px-5 py-2.5 text-sm font-medium transition ${
-                            form.additionalUnits === val
-                              ? "border-[#7ba3c4] bg-[#7ba3c4] text-white"
-                              : "border-white/50 bg-white/70 text-neutral-700 hover:border-[#7ba3c4]/50"
-                          }`}
-                        >
-                          <input
-                            type="radio"
-                            name="additionalUnits"
-                            value={val}
-                            checked={form.additionalUnits === val}
-                            onChange={() => setForm((f) => ({ ...f, additionalUnits: val }))}
-                            className="sr-only"
-                          />
-                          {val === "yes" ? "Yes" : "No"}
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-
                   {/* ADU type checkboxes */}
                   <div>
                     <p className="mb-3 text-sm font-medium text-neutral-700">
