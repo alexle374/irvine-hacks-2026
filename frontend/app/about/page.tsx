@@ -86,7 +86,7 @@ export default function AboutPage() {
           className="flex items-center gap-2 font-serif text-xl font-semibold tracking-tight text-neutral-800"
         >
           <HomeIcon className="h-5 w-5" />
-          Inspector AI
+          CloseSure
         </Link>
         <div className="flex items-baseline gap-4">
           <Link
@@ -96,10 +96,10 @@ export default function AboutPage() {
             About
           </Link>
           <Link
-            href="/login"
+            href=""
             className="text-sm font-medium text-neutral-700 transition-colors hover:text-neutral-900"
           >
-            Login
+            Sign In
           </Link>
         </div>
       </nav>
