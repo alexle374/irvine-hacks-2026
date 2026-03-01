@@ -59,7 +59,13 @@ export default function AddressPage() {
       setErrors(errs);
       return;
     }
-    router.push("/report");
+    const fullAddress = `${form.street}, ${form.city}, ${form.state} ${form.zip}`.trim();
+    const params = new URLSearchParams({
+      address: fullAddress,
+      year_built: form.yearBuilt || "0",
+      adu_claimed: form.hasAdu ? "true" : "false",
+    });
+    router.push(`/report?${params.toString()}`);
   }
 
   return (
