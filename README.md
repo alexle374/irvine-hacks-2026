@@ -1,4 +1,4 @@
-# Inspector AI
+# CloseSure
 
 An AI-powered home pre-inspection tool for home buyers. Enter a property address and get an instant, personalized inspection risk report generated from real public building permit records.
 
